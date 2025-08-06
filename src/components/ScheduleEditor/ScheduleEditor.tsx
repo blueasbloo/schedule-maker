@@ -65,81 +65,81 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
     const hasAnyActivities = DAYS.some((day) => scheduleData.schedule[day]?.length > 0)
 
     if (!hasAnyActivities) {
-      const defaultSchedule = {
-        Monday: [
-          {
-            id: "mon-1",
-            time: "19:00",
-            title: "Stream title goes here",
-            subtitle: "Stream subtitle goes here",
-            type: "stream" as const,
-            tags: { collab: true, announcement: true },
-          },
-        ],
-        Tuesday: [],
-        Wednesday: [
-          {
-            id: "wed-1",
-            time: "08:00",
-            title: "Silent working stream",
-            subtitle: "Study/work together",
-            type: "stream" as const,
-            memberOnly: true,
-            tags: { collab: false, announcement: true },
-          },
-          {
-            id: "wed-2",
-            time: "20:00",
-            title: "Resident Evil 10",
-            subtitle: "The resident is very evil",
-            type: "stream" as const,
-            tags: { collab: true, announcement: false, special: true },
-          },
-        ],
-        Thursday: [
-          {
-            id: "thu-1",
-            type: "offline" as const,
-            offlineText: "ON VACATION",
-          },
-        ],
-        Friday: [
-          {
-            id: "fri-1",
-            time: "18:00",
-            title: "Reverse: 1999",
-            subtitle: "LET'S GOOOOOOOOOO",
-            type: "stream" as const,
-            tags: { collab: true, announcement: true },
-          },
-        ],
-        Saturday: [
-          {
-            id: "sat-1",
-            time: "01:00",
-            title: "Columbo Watchalong",
-            subtitle: "Season 1-5",
-            type: "stream" as const,
-            memberOnly: true,
-          },
-          {
-            id: "sat-2",
-            type: "offline" as const,
-            offlineText: "OFFLINE ▷",
-          },
-        ],
-        Sunday: [
-          {
-            id: "sun-1",
-            time: "14:00",
-            title: "SUPERCHAT CATCHUP & ANNOUNCEMENT",
-            type: "stream" as const,
-            tags: { special: true },
-          },
-        ]
-      };
+      // const defaultSchedule = {
+      //   Monday: [
+      //     {
+      //       id: "mon-1",
+      //       time: "19:00",
+      //       title: "Stream title goes here",
+      //       subtitle: "Stream subtitle goes here",
+      //       type: "stream" as const,
+      //       tags: { collab: true, announcement: true },
+      //     },
+      //   ],
+      //   Tuesday: [],
+      //   Wednesday: [
+      //     {
+      //       id: "wed-1",
+      //       time: "08:00",
+      //       title: "Silent working stream",
+      //       subtitle: "Study/work together",
+      //       type: "stream" as const,
+      //       memberOnly: true,
+      //       tags: { collab: false, announcement: true },
+      //     },
+      //     {
+      //       id: "wed-2",
+      //       time: "20:00",
+      //       title: "Resident Evil 10",
+      //       subtitle: "The resident is very evil",
+      //       type: "stream" as const,
+      //       tags: { collab: true, announcement: false, special: true },
+      //     },
+      //   ],
+      //   Thursday: [
+      //     {
+      //       id: "thu-1",
+      //       type: "offline" as const,
+      //       offlineText: "ON VACATION",
+      //     },
+      //   ],
+      //   Friday: [
+      //     {
+      //       id: "fri-1",
+      //       time: "18:00",
+      //       title: "Reverse: 1999",
+      //       subtitle: "LET'S GOOOOOOOOOO",
+      //       type: "stream" as const,
+      //       tags: { collab: true, announcement: true },
+      //     },
+      //   ],
+      //   Saturday: [
+      //     {
+      //       id: "sat-1",
+      //       time: "01:00",
+      //       title: "Columbo Watchalong",
+      //       subtitle: "Season 1-5",
+      //       type: "stream" as const,
+      //       memberOnly: true,
+      //     },
+      //     {
+      //       id: "sat-2",
+      //       type: "offline" as const,
+      //       offlineText: "OFFLINE ▷",
+      //     },
+      //   ],
+      //   Sunday: [
+      //     {
+      //       id: "sun-1",
+      //       time: "14:00",
+      //       title: "SUPERCHAT CATCHUP & ANNOUNCEMENT",
+      //       type: "stream" as const,
+      //       tags: { special: true },
+      //     },
+      //   ]
+      // };
 
-      // const defaultSchedule = {};
+      const defaultSchedule = {};
 
       setScheduleData((prev: any) => ({
         ...prev,
