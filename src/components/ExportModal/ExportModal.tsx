@@ -140,7 +140,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ scheduleData, isOpen, onClose
         </Alert>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2, mb: 1, backgroundColor: currentTheme.colors.surfaceBackground }}>
+      <DialogActions sx={{ px: 3, pb: 3, backgroundColor: currentTheme.colors.surfaceBackground }}>
         <Button onClick={onClose} variant="outlined">
           Cancel
         </Button>

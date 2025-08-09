@@ -50,5 +50,6 @@ export interface ColorTheme {
     primarySet?: string[];
     textSet?: string[];
     timeBadgeSet?: string[];
+    tagTextSet?: string[];
   }
 }

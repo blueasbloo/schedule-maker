@@ -1039,7 +1039,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                 }
                                 label={
                                   <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
-                                    ???
+                                    Special
                                   </Typography>
                                 }
                               />
@@ -1052,7 +1052,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                     size="small"
                                     sx={{
                                       bgcolor: currentTheme.colors.secondary,
-                                      color: "white",
+                                      color: currentTheme.colors.tagTextSet?.[1],
                                       fontSize: "0.625rem",
                                       height: "20px",
                                       fontWeight: 600,
@@ -1065,7 +1065,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                     size="small"
                                     sx={{
                                       bgcolor: currentTheme.colors.primary,
-                                      color: "white",
+                                      color: currentTheme.colors.tagTextSet?.[0],
                                       fontSize: "0.625rem",
                                       height: "20px",
                                       fontWeight: 600,
@@ -1074,11 +1074,11 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                 )}
                                 {entry.tags.special && (
                                   <Chip
-                                    label="???"
+                                    label="SPECIAL"
                                     size="small"
                                     sx={{
                                       bgcolor: currentTheme.colors.tertiary,
-                                      color: "white",
+                                      color: currentTheme.colors.tagTextSet?.[2],
                                       fontSize: "0.625rem",
                                       height: "20px",
                                       fontWeight: 600,

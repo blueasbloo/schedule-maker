@@ -9,7 +9,7 @@ import {
 import SchedulePreview from "./components/SchedulePreview/SchedulePreview";
 import ScheduleEditor from "./components/ScheduleEditor/ScheduleEditor";
 import Footer from "./components/Footer/Footer";
-import type { ImageTransform, ScheduleData, TabPanelProps } from "./types";
+import type { BackgroundTransform, ImageTransform, ScheduleData, TabPanelProps } from "./types";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Box, Container, createTheme, CssBaseline, ThemeProvider as MuiThemeProvider, Tab, Tabs } from "@mui/material";
 import { Settings, Visibility } from "@mui/icons-material";
@@ -61,7 +61,12 @@ const AppContent = () => {
       flipX: false,
       flipY: false,
     },
-    transparentBackground: true,
+    backgroundTransform: {
+      positionX: 50,
+      positionY: 50,
+      scale: 1,
+    },
+    transparentBackground: false,
     schedulePosition: "right"
   });
 
@@ -123,6 +128,12 @@ const AppContent = () => {
     setScheduleData((prev) => ({
       ...prev,
       imageTransform: transform,
+    }))
+  };
+  const handleBackgroundTransformChange = (transform: BackgroundTransform) => {
+    setScheduleData((prev) => ({
+      ...prev,
+      backgroundTransform: transform,
     }))
   };
 
@@ -187,7 +198,11 @@ const AppContent = () => {
 
                 <TabPanel value={activeTab} index={1}>
                   <PreviewContainer>
-                    <SchedulePreview scheduleData={scheduleData} onImageTransformChange={handleImageTransformChange} />
+                    <SchedulePreview 
+                      scheduleData={scheduleData} 
+                      onImageTransformChange={handleImageTransformChange} 
+                      onBackgroundTransformChange={handleBackgroundTransformChange} 
+                    />
                   </PreviewContainer>
                 </TabPanel>
 

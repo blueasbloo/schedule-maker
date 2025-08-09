@@ -239,7 +239,7 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
                 <ListItemText primary="Click the Settings icon on top of your image to open controls" />
               </ListItem>
               <ListItem>
-                <ListItemText primary="Drag your image to reposition it (not available with full background)" />
+                <ListItemText primary="Drag your image to reposition it" />
               </ListItem>
               <ListItem>
                 <ListItemText primary="Use sliders to adjust scale and rotation" />

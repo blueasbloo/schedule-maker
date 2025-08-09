@@ -64,6 +64,7 @@ export interface ScheduleData {
   schedule: DaySchedule;
   backgroundImage: string | null;
   imageTransform: ImageTransform;
+  backgroundTransform: BackgroundTransform;
   transparentBackground: boolean;
   schedulePosition: "right" | "left";
 };
@@ -77,6 +78,7 @@ export interface ScheduleEditorProps {
 export interface SchedulePreviewProps {
   scheduleData: ScheduleData;
   onImageTransformChange?: (transform: ImageTransform) => void;
+  onBackgroundTransformChange?: (transform: BackgroundTransform) => void;
   isExporting?: boolean;
 };
 

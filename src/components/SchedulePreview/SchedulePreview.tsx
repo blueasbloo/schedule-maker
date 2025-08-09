@@ -78,21 +78,21 @@ const convertTimeWithDayDiff = (time: string, fromTz: string, toTz: string): { t
 
 const SchedulePreview: React.FC<SchedulePreviewProps> = ({ 
   scheduleData, 
-  onImageTransformChange, 
+  onImageTransformChange,
+  onBackgroundTransformChange,
   isExporting = false 
 }) => {
-  const { currentTheme, isDarkMode } = useCustomTheme();
+  const { currentTheme } = useCustomTheme();
   const [showImageControls, setShowImageControls] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBackgroundControls, setShowBackgroundControls] = useState(false);
 
-  const [backgroundTransform, setBackgroundTransform] = useState<BackgroundTransform>({
-    scale: 1,
-    positionX: 50,
-    positionY: 50,
-  });
+  // Background handlers
+  const [isDraggingBackground, setIsDraggingBackground] = useState(false);
+  const [backgroundDragStart, setBackgroundDragStart] = useState({ x: 0, y: 0 });
+
 
   // Date time handlers
   const formatDate = (dateString: string) => {
@@ -138,30 +138,33 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   const weekDates = getWeekDates();
 
   const getImageTransformStyle = () => {
-    const { x, y, scale, rotation, flipX, flipY } = scheduleData.imageTransform
-    const scaleX = flipX ? -scale : scale
-    const scaleY = flipY ? -scale : scale
+    const { x, y, scale, rotation, flipX, flipY } = scheduleData.imageTransform;
+    const scaleX = flipX ? -scale : scale;
+    const scaleY = flipY ? -scale : scale;
     return {
       transform: `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`,
       transformOrigin: "center center",
       cursor: isDragging ? "grabbing" : scheduleData.backgroundImage ? "grab" : "default",
-    }
+    };
   };
 
   const getTransparentBackgroundStyle = () => {
     if (!scheduleData.transparentBackground || !scheduleData.backgroundImage) {
-      return {}
+      return {};
     }
+    const { positionX, positionY, scale } = scheduleData.backgroundTransform;
 
     return {
       backgroundImage: `url(${scheduleData.backgroundImage})`,
-      backgroundSize: `${backgroundTransform.scale * 100}%`,
-      backgroundPosition: `${backgroundTransform.positionX}% ${backgroundTransform.positionY}%`,
+      backgroundSize: `${scale * 100}%`,
+      backgroundPosition: `${positionX}% ${positionY}%`,
       backgroundRepeat: "no-repeat",
-    }
+      cursor: isDraggingBackground ? "grabbing" : "grab",
+      transition: isDraggingBackground ? "none" : "background-position 0.1s ease-out",
+    };
   };
 
-  // Image control handlers
+  // Small-background control handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!scheduleData.backgroundImage || !onImageTransformChange || isExporting) return;
     e.preventDefault();
@@ -187,6 +190,64 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
     setIsDragging(false);
   };
 
+  // Full-background dragging handlers
+  const handleBackgroundMouseDown = (e: React.MouseEvent) => {
+    if (!scheduleData.transparentBackground || !scheduleData.backgroundImage || isExporting) 
+      return;
+    e.preventDefault();
+    setIsDraggingBackground(true);
+
+    setBackgroundDragStart({
+      x: e.clientX,
+      y: e.clientY,
+    });
+  };
+
+  const handleBackgroundMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingBackground || !scheduleData.transparentBackground || !scheduleData.backgroundImage || !onBackgroundTransformChange || isExporting)
+      return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const containerWidth = rect.width;
+    const containerHeight = rect.height;
+
+    // Calculate mouse movement delta
+    const deltaX = e.clientX - backgroundDragStart.x;
+    const deltaY = e.clientY - backgroundDragStart.y;
+
+    // Use a base sensitivity that feels natural, then adjust for scale
+    const baseSensitivity = 1; // Increase this for faster movement
+    const scaleAdjustment = Math.max(0.5, 1 / Math.sqrt(scheduleData.backgroundTransform.scale)); // Smoother scale compensation
+
+    let percentageChangeX = (deltaX / containerWidth) * 100 * baseSensitivity * scaleAdjustment;
+    let percentageChangeY = (deltaY / containerHeight) * 100 * baseSensitivity * scaleAdjustment;
+
+    // Invert movement when scale > 1 (CSS background-position behavior)
+    if (scheduleData.backgroundTransform.scale > 1) {
+      percentageChangeX = -percentageChangeX;
+      percentageChangeY = -percentageChangeY;
+    }
+
+    // Calculate new position based on the initial position when drag started
+    const newX = scheduleData.backgroundTransform.positionX + percentageChangeX;
+    const newY = scheduleData.backgroundTransform.positionY + percentageChangeY;
+
+    onBackgroundTransformChange({
+      ...scheduleData.backgroundTransform,
+      positionX: newX,
+      positionY: newY,
+    });
+     // Update drag start position for next frame
+    setBackgroundDragStart({
+      x: e.clientX,
+      y: e.clientY,
+    });
+  };
+
+  const handleBackgroundMouseUp = () => {
+    setIsDraggingBackground(false);
+  };
+
   // Activity entry handlers
   const renderActivityTags = (entry: any) => {
     const tags = [];
@@ -200,7 +261,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           className="poetsen-one-font"
           sx={{
             bgcolor: currentTheme.colors.secondary,
-            color: "white",
+            color: currentTheme.colors.tagTextSet?.[1],
             fontSize: "0.7rem",
             height: "22px",
           }}
@@ -217,8 +278,8 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           className="poetsen-one-font"
           sx={{
             bgcolor: currentTheme.colors.primary,
-            color: "white",
-            fontSize: "0.625rem",
+            color: currentTheme.colors.tagTextSet?.[0],
+            fontSize: "0.7rem",
             height: "22px",
           }}
         />,
@@ -229,13 +290,13 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       tags.push(
         <Chip
           key="special"
-          label="???"
+          label="SPECIAL"
           size="small"
           className="poetsen-one-font"
           sx={{
             bgcolor: currentTheme.colors.tertiary,
-            color: "white",
-            fontSize: "0.625rem",
+            color: currentTheme.colors.tagTextSet?.[2],
+            fontSize: "0.7rem",
             height: "22px",
           }}
         />,
@@ -870,7 +931,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           backgroundImage: scheduleData.transparentBackground ? "none" : sectionBg,
           backgroundSize: "60px 60px",
           backgroundPosition: "0 0, 30px 0, 15px 30px, 45px 30px",
-          backgroundBlendMode: isDarkMode ? "normal" : "hard-light",
+          // backgroundBlendMode: isDarkMode ? "normal" : "hard-light",
           padding: "24px 30px",
           display: "flex",
           flexDirection: "column",
@@ -947,9 +1008,27 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
                 background: `linear-gradient(135deg, #8da5cbff 0%, #142648ff 100%)`,
               }),
         }}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseMove={(e) => {
+          handleMouseMove(e); // Small-background dragging
+          handleBackgroundMouseMove(e) // Full-background dragging
+        }}
+        onMouseUp={() => {
+          handleMouseUp(); // Small-background dragging
+          handleBackgroundMouseUp(); // Full-background dragging
+        }}
+        onMouseLeave={() => {
+          handleMouseUp(); // Small-background dragging
+          handleBackgroundMouseUp(); // Full-background dragging
+        }}
+        onMouseDown={(e) => {
+          // Only handle background dragging if transparent background is enabled
+          if (scheduleData.transparentBackground && scheduleData.backgroundImage && !isExporting) {
+            const target = e.target as HTMLElement;
+            if (!target.closest('img') && !target.closest('button') && !target.closest('[data-testid]')) {
+              handleBackgroundMouseDown(e);
+            }
+          }
+        }}
       >
         {/* Render sections based on layout */}
         {isScheduleOnLeft ? (
@@ -1007,11 +1086,11 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       )}
 
       {/* Full-background Controls Dialog */}
-      {showBackgroundControls && scheduleData.transparentBackground && scheduleData.backgroundImage && !isExporting && (
+      {showBackgroundControls && scheduleData.transparentBackground && scheduleData.backgroundImage && onBackgroundTransformChange && !isExporting && (
         <ImageControls
           mode="full-background"
-          transform={backgroundTransform}
-          onTransformChange={(t) => setBackgroundTransform(t as BackgroundTransform)}
+          transform={scheduleData.backgroundTransform}
+          onTransformChange={(t) => onBackgroundTransformChange(t as BackgroundTransform)}
           onClose={() => setShowBackgroundControls(false)}
           theme={currentTheme}
           title="Background Controls"

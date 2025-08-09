@@ -273,8 +273,7 @@ export const ImageControls: React.FC<ImageControlsProps> = ({
         sx={{ 
           display: "flex", 
           justifyContent: "space-between", 
-          alignItems: "center", 
-          // mb: 2,
+          alignItems: "center",
           cursor: isDragging ? "grabbing" : "grab",
         }}
       >
