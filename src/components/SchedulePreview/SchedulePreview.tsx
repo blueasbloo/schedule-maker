@@ -286,11 +286,11 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       )
     }
 
-    if (entry.tags?.special) {
+    if (entry.tags?.custom && entry.tags?.customText && entry.tags.customText.trim()) {
       tags.push(
         <Chip
-          key="special"
-          label="SPECIAL"
+          key="custom"
+          label={entry.tags.customText.toUpperCase()}
           size="small"
           className="poetsen-one-font"
           sx={{

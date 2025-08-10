@@ -93,7 +93,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
       //       title: "Resident Evil 10",
       //       subtitle: "The resident is very evil",
       //       type: "stream" as const,
-      //       tags: { collab: true, announcement: false, special: true },
+      //       tags: { collab: true, announcement: false, custom: true, customText: "SPECIAL" },
       //     },
       //   ],
       //   Thursday: [
@@ -134,7 +134,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
       //       time: "14:00",
       //       title: "SUPERCHAT CATCHUP & ANNOUNCEMENT",
       //       type: "stream" as const,
-      //       tags: { special: true },
+      //       tags: { custom: true, customText: "MV RELEASE" },
       //     },
       //   ]
       // };
@@ -157,7 +157,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
       subtitle: "Description here",
       type: "stream",
       memberOnly: false,
-      tags: { collab: false, announcement: false, special: false },
+      tags: { collab: false, announcement: false, custom: false, customText: "" },
     }
 
     setScheduleData((prev: any) => ({
@@ -192,7 +192,13 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
     }))
   };
 
-  const updateScheduleEntryTag = (day: string, entryId: string, tagType: "collab" | "announcement" | "special", value: boolean) => {
+  const updateScheduleEntryTag = 
+    (
+      day: string, 
+      entryId: string, 
+      tagType: "collab" | "announcement", 
+      value: boolean,
+    ) => {
     setScheduleData((prev) => ({
       ...prev,
       schedule: {
@@ -205,6 +211,34 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                   tags: {
                     ...entry.tags,
                     [tagType]: value,
+                  },
+                }
+              : entry,
+          ) || [],
+      },
+    }))
+  };
+
+  const updateCustomEntryTag = 
+    (
+      day: string, 
+      entryId: string, 
+      custom: boolean,
+      customText: string,
+    ) => {
+    setScheduleData((prev) => ({
+      ...prev,
+      schedule: {
+        ...prev.schedule,
+        [day]:
+          prev.schedule[day]?.map((entry) =>
+            entry.id === entryId
+              ? {
+                  ...entry,
+                  tags: {
+                    ...entry.tags,
+                    custom: custom,
+                    customText: customText,
                   },
                 }
               : entry,
@@ -1024,9 +1058,9 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                               <FormControlLabel
                                 control={
                                   <Checkbox
-                                    checked={entry.tags?.special || false}
+                                    checked={entry.tags?.custom || false}
                                     onChange={(e) =>
-                                      updateScheduleEntryTag(selectedDay, entry.id, "special", e.target.checked)
+                                      updateCustomEntryTag(selectedDay, entry.id, e.target.checked, entry.tags?.customText || "")
                                     }
                                     size="small"
                                     sx={{
@@ -1039,12 +1073,37 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                 }
                                 label={
                                   <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
-                                    Special
+                                    Custom
                                   </Typography>
                                 }
                               />
                             </FormGroup>
-                            {(entry.tags?.collab || entry.tags?.announcement) && (
+
+                            {/* Custom Tag Input */}
+                            {entry.tags?.custom && (
+                              <Box sx={{ mt: 1, mb: 2 }}>
+                                <TextField
+                                  fullWidth
+                                  label="Custom Tag"
+                                  value={entry.tags?.customText || ""}
+                                  onChange={(e) => updateCustomEntryTag(selectedDay, entry.id, entry.tags?.custom || false, e.target.value)}
+                                  placeholder="Enter custom tag text"
+                                  size="small"
+                                  sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                      "&:hover fieldset": {
+                                        borderColor: currentTheme.colors.primary,
+                                      },
+                                      "&.Mui-focused fieldset": {
+                                        borderColor: currentTheme.colors.primary,
+                                      },
+                                    },
+                                  }}
+                                />
+                              </Box>
+                            )}
+
+                            {(entry.tags?.collab || entry.tags?.announcement || (entry.tags?.customText && entry.tags?.customText.trim())) && (
                               <Box sx={{ my: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
                                 {entry.tags.collab && (
                                   <Chip
@@ -1072,9 +1131,9 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                                     }}
                                   />
                                 )}
-                                {entry.tags.special && (
+                                {entry.tags.custom && entry.tags.customText && entry.tags.customText.trim() && (
                                   <Chip
-                                    label="SPECIAL"
+                                    label={entry.tags.customText.toUpperCase()}
                                     size="small"
                                     sx={{
                                       bgcolor: currentTheme.colors.tertiary,

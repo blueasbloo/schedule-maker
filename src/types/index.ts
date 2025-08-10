@@ -14,7 +14,8 @@ export interface ScheduleEntry {
   tags: {
     collab?: boolean;
     announcement?: boolean;
-    special?: boolean;
+    custom?: boolean;
+    customText?: string;
   };
   offlineText?: string;
 };
