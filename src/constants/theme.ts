@@ -433,6 +433,7 @@ export const themes: ColorTheme[] = [
   {
     id: "vintage-scarlet-dark",
     name: "Vintage Scarlet",
+    isDark: true,
     colors: {
       primary: "#C1121F",
       secondary: "#FDF0D5",
