@@ -27,7 +27,7 @@ const TabPanel = (props: TabPanelProps) => {
       aria-labelledby={`schedule-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+      <Box sx={{ pt: 3, display: value === index ? 'block' : 'none' }}>{children}</Box>
     </div>
   )
 };
@@ -92,8 +92,35 @@ const AppContent = () => {
     },
   });
 
-  // Initialize with current week
   useEffect(() => {
+    const savedData = localStorage.getItem('schedule-maker-data');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        const dataWithDefaults = {
+          ...parsedData,
+          imageTransform: parsedData.imageTransform || {
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotation: 0,
+            flipX: false,
+            flipY: false,
+          },
+          backgroundTransform: parsedData.backgroundTransform || {
+            positionX: 50,
+            positionY: 50,
+            scale: 1,
+          },
+        };
+        
+        setScheduleData(dataWithDefaults);
+        return;
+      } catch (error) {
+        console.error('Failed to load saved schedule data:', error);
+      }
+    }
+
     const today = new Date();
     const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
     const endOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
@@ -108,33 +135,73 @@ const AppContent = () => {
   const handleImageUpload = (file: File) => {
     const reader = new FileReader()
     reader.onload = (e) => {
-      setScheduleData((prev: any) => ({
-        ...prev,
-        backgroundImage: e.target?.result as string,
-        imageTransform: {
-          x: 0,
-          y: 0,
-          scale: 1,
-          rotation: 0,
-          flipX: false,
-          flipY: false,
-        },
-      }))
+      const newImageData = e.target?.result as string;
+      
+      setScheduleData((prev: any) => {
+        return {
+          ...prev,
+          backgroundImage: newImageData,
+          imageTransform: {
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotation: 0,
+            flipX: false,
+            flipY: false,
+          },
+        };
+      })
+    }
+    reader.readAsDataURL(file)
+  };
+
+  const handleImageRestore = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const newImageData = e.target?.result as string;
+      
+      setScheduleData((prev: any) => {
+        return {
+          ...prev,
+          backgroundImage: newImageData,
+        };
+      })
     }
     reader.readAsDataURL(file)
   };
 
   const handleImageTransformChange = (transform: ImageTransform) => {
-    setScheduleData((prev) => ({
-      ...prev,
-      imageTransform: transform,
-    }))
+    setScheduleData((prev) => {
+      const newData = {
+        ...prev,
+        imageTransform: transform,
+      };
+      
+      try {
+        localStorage.setItem('schedule-maker-data', JSON.stringify(newData));
+      } catch (error) {
+        console.error('Failed to save image transform to localStorage:', error);
+      }
+      
+      return newData;
+    });
   };
+
   const handleBackgroundTransformChange = (transform: BackgroundTransform) => {
-    setScheduleData((prev) => ({
-      ...prev,
-      backgroundTransform: transform,
-    }))
+    setScheduleData((prev) => {
+      const newData = {
+        ...prev,
+        backgroundTransform: transform,
+      };
+      
+      try {
+        localStorage.setItem('schedule-maker-data', JSON.stringify(newData));
+      } catch (error) {
+        console.error('Failed to save background transform to localStorage:', error);
+      }
+      
+      return newData;
+    });
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -193,6 +260,7 @@ const AppContent = () => {
                     scheduleData={scheduleData}
                     setScheduleData={setScheduleData}
                     onImageUpload={handleImageUpload}
+                    onImageRestore={handleImageRestore}
                   />
                 </TabPanel>
 

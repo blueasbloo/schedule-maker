@@ -74,6 +74,7 @@ export interface ScheduleEditorProps {
   scheduleData: ScheduleData;
   setScheduleData: (data: ScheduleData | ((prev: ScheduleData) => ScheduleData)) => void;
   onImageUpload: (file: File) => void;
+  onImageRestore?: (file: File) => void;
 };
 
 export interface SchedulePreviewProps {

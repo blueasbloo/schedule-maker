@@ -55,98 +55,61 @@ const formatDate = (dateString: string) => {
   }
 };
 
-const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setScheduleData, onImageUpload }) => {
+const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setScheduleData, onImageUpload, onImageRestore }) => {
   const [selectedDay, setSelectedDay] = useState("Monday");
   const { currentTheme, setTheme, themes, isDarkMode } = useCustomTheme();
   const [showHelp, setShowHelp] = useState(false);
-
-  // Add default activities when component mounts
+  const [hasAttemptedImageLoad, setHasAttemptedImageLoad] = useState(false);
   useEffect(() => {
-    const hasAnyActivities = DAYS.some((day) => scheduleData.schedule[day]?.length > 0)
+    if (scheduleData) {
+      const timeoutId = setTimeout(() => {
+        try {
+          localStorage.setItem('schedule-maker-data', JSON.stringify(scheduleData));
+        } catch (error) {
+          console.error('Failed to save schedule data:', error);
+        }
+      }, 500);
 
-    if (!hasAnyActivities) {
-      // const defaultSchedule = {
-      //   Monday: [
-      //     {
-      //       id: "mon-1",
-      //       time: "19:00",
-      //       title: "Stream title goes here",
-      //       subtitle: "Stream subtitle goes here",
-      //       type: "stream" as const,
-      //       tags: { collab: true, announcement: true },
-      //     },
-      //   ],
-      //   Tuesday: [],
-      //   Wednesday: [
-      //     {
-      //       id: "wed-1",
-      //       time: "08:00",
-      //       title: "Silent working stream",
-      //       subtitle: "Study/work together",
-      //       type: "stream" as const,
-      //       memberOnly: true,
-      //       tags: { collab: false, announcement: true },
-      //     },
-      //     {
-      //       id: "wed-2",
-      //       time: "20:00",
-      //       title: "Resident Evil 10",
-      //       subtitle: "The resident is very evil",
-      //       type: "stream" as const,
-      //       tags: { collab: true, announcement: false, custom: true, customText: "SPECIAL" },
-      //     },
-      //   ],
-      //   Thursday: [
-      //     {
-      //       id: "thu-1",
-      //       type: "offline" as const,
-      //       offlineText: "ON VACATION",
-      //     },
-      //   ],
-      //   Friday: [
-      //     {
-      //       id: "fri-1",
-      //       time: "18:00",
-      //       title: "Reverse: 1999",
-      //       subtitle: "LET'S GOOOOOOOOOO",
-      //       type: "stream" as const,
-      //       tags: { collab: true, announcement: true },
-      //     },
-      //   ],
-      //   Saturday: [
-      //     {
-      //       id: "sat-1",
-      //       time: "01:00",
-      //       title: "Columbo Watchalong",
-      //       subtitle: "Season 1-5",
-      //       type: "stream" as const,
-      //       memberOnly: true,
-      //     },
-      //     {
-      //       id: "sat-2",
-      //       type: "offline" as const,
-      //       offlineText: "OFFLINE ▷",
-      //     },
-      //   ],
-      //   Sunday: [
-      //     {
-      //       id: "sun-1",
-      //       time: "14:00",
-      //       title: "SUPERCHAT CATCHUP & ANNOUNCEMENT",
-      //       type: "stream" as const,
-      //       tags: { custom: true, customText: "MV RELEASE" },
-      //     },
-      //   ]
-      // };
-
-      const defaultSchedule = {};
-
-      setScheduleData((prev: any) => ({
-        ...prev,
-        schedule: defaultSchedule,
-      }));
+      return () => clearTimeout(timeoutId);
     }
-  }, [scheduleData.schedule, setScheduleData]);
+  }, [scheduleData]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!hasAttemptedImageLoad && !scheduleData.backgroundImage) {
+        setHasAttemptedImageLoad(true);
+        
+        const savedImage = localStorage.getItem('schedule-maker-image');
+        if (savedImage) {
+          try {
+            const imageData = JSON.parse(savedImage);
+            fetch(imageData.data)
+              .then(res => res.blob())
+              .then(blob => {
+                const file = new File([blob], imageData.name, { type: imageData.type });
+                if (onImageRestore) {
+                  onImageRestore(file);
+                } else {
+                  onImageUpload(file);
+                }
+              })
+              .catch(error => {
+                console.error('Failed to restore image:', error);
+              });
+          } catch (error) {
+            console.error('Failed to load saved image:', error);
+          }
+        } else {
+          console.log('ScheduleEditor: No saved image found in localStorage');
+        }
+      } else if (scheduleData.backgroundImage) {
+        setHasAttemptedImageLoad(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAttemptedImageLoad, scheduleData.backgroundImage]);
 
   // Schedule Entry Management
   const addScheduleEntry = (day: string) => {
@@ -261,7 +224,67 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('Image file is too large. Please choose a file smaller than 5MB for automatic saving.');
+        onImageUpload(file);
+        return;
+      }
+
+      // Convert file to base64 and store in localStorage
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        const imageData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: base64String,
+          uploadedAt: new Date().toISOString()
+        };
+        
+        try {
+          const dataString = JSON.stringify(imageData);
+          // Check if the data would fit in localStorage (approximate size check)
+          if (dataString.length > 4.5 * 1024 * 1024) {
+            alert('Image is large and may not persist between sessions. Consider using a smaller image.');
+          } else {
+            localStorage.setItem('schedule-maker-image', dataString);
+          }
+        } catch (error) {
+          console.error('Failed to save image to localStorage:', error);
+          if (error instanceof DOMException && error.code === 22) {
+            alert('Storage quota exceeded. Image will not persist between sessions.');
+          }
+        }
+      };
+      reader.readAsDataURL(file);
       onImageUpload(file)
+    }
+  };
+
+  const clearSavedImage = () => {
+    try {
+      localStorage.removeItem('schedule-maker-image');
+      setScheduleData((prev) => ({
+        ...prev,
+        backgroundImage: null,
+        imageTransform: {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rotation: 0,
+          flipX: false,
+          flipY: false,
+        },
+        backgroundTransform: {
+          positionX: 50,
+          positionY: 50,
+          scale: 1,
+        },
+      }));
+    } catch (error) {
+      console.error('Failed to clear saved image:', error);
     }
   };
 
@@ -394,15 +417,6 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                     {lightThemes.map((theme) => (
                       <MenuItem key={theme.id} value={theme.id}>
                         <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%" }}>
-                          {/* <Box
-                            sx={{
-                              width: 20,
-                              height: 12,
-                              borderRadius: 0.5,
-                              background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
-                              flexShrink: 0,
-                            }}
-                          /> */}
                           <Box
                             sx={{
                               width: 20,
@@ -820,22 +834,36 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                   onChange={handleFileUpload}
                   style={{ display: "none" }}
                 />
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<Upload />}
-                  onClick={() => document.getElementById("background-image")?.click()}
-                  sx={{ mb: 1 }}
-                >
-                  Upload Image
-                </Button>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={<Upload />}
+                    onClick={() => document.getElementById("background-image")?.click()}
+                  >
+                    Upload Image
+                  </Button>
+                  {scheduleData.backgroundImage && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<Delete />}
+                      onClick={() => {
+                        clearSavedImage();
+                      }}
+                      sx={{ minWidth: 'auto' }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </Box>
                 {scheduleData.backgroundImage && (
                   <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       Image uploaded successfully!
                     </Typography>
                     <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                      💡 Go to Preview tab to edit your image position, size, and rotation
+                      💡 Go to Preview tab to edit your image position, size, and rotation. Both the image and all your edits will be restored automatically when you reopen the app.
                     </Typography>
                   </Alert>
                 )}
