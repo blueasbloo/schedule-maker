@@ -460,13 +460,8 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                   value={scheduleData.startDate}
                   onChange={(e) => {
                     const selectedDate = new Date(e.target.value);
-                    // Calculate the Monday of the selected week
-                    const dayOfWeek = selectedDate.getDay();
                     const startOfWeek = new Date(selectedDate);
-                    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                    startOfWeek.setDate(selectedDate.getDate() - daysToSubtract);
-
-                    // Calculate the Sunday (end of week)
+                    startOfWeek.setDate(selectedDate.getDate());
                     const endOfWeek = new Date(startOfWeek);
                     endOfWeek.setDate(startOfWeek.getDate() + 6);
 

@@ -45,7 +45,7 @@ const convertTimeWithDayDiff = (time: string, fromTz: string, toTz: string): { t
     pst: -8, // UTC-8
     pdt: -7, // UTC-7
     cst: -6, // UTC-6
-    est: -4, // UTC-4
+    est: -5, // UTC-5
     gmt: 0, // UTC+0 (same as UTC)
     cet: 1, // UTC+1
     cest: 2, // UTC+2
@@ -362,9 +362,22 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
     const cardBgColor = currentTheme.colors.cardBackground;
     const cardBorderColor = currentTheme.colors.cardBorder;
 
+    const getActualDayAbbrev = (dayIndex: number) => {
+      if (!scheduleData.startDate) return DAY_ABBREV[dayIndex];
+      try {
+        const startDate = parseISO(scheduleData.startDate);
+        const currentDate = addDays(startDate, dayIndex);
+        const dayOfWeek = currentDate.getDay();
+        const adjustedIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        return DAY_ABBREV[adjustedIndex];
+      } catch {
+        return DAY_ABBREV[dayIndex];
+      }
+    };
+
     const DayAbbreviationChip = ({ dayIndex }: { dayIndex: number }) => (
       <Chip
-        label={DAY_ABBREV[dayIndex]}
+        label={getActualDayAbbrev(dayIndex)}
         size="small"
         className="titan-one-font"
         sx={{
