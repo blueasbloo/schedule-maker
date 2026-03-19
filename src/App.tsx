@@ -52,6 +52,7 @@ const AppContent = () => {
     ],
     schedule: {},
     scheduleTitle: "SCHEDULE",
+    smallImage: null,
     backgroundImage: null,
     imageTransform: {
       x: 0,
@@ -66,11 +67,11 @@ const AppContent = () => {
       positionY: 50,
       scale: 1,
     },
-    transparentBackground: false,
+    // transparentBackground: false,
     schedulePosition: "right"
   });
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(1);
   const { currentTheme, isDarkMode } = useCustomTheme();
 
   const muiTheme = createTheme({
@@ -155,6 +156,29 @@ const AppContent = () => {
     reader.readAsDataURL(file)
   };
 
+  const handleSmallImageUpload = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const newImageData = e.target?.result as string;
+      
+      setScheduleData((prev: any) => {
+        return {
+          ...prev,
+          smallImage: newImageData,
+          imageTransform: {
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotation: 0,
+            flipX: false,
+            flipY: false,
+          },
+        };
+      })
+    }
+    reader.readAsDataURL(file)
+  };
+
   const handleImageRestore = (file: File) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -164,6 +188,21 @@ const AppContent = () => {
         return {
           ...prev,
           backgroundImage: newImageData,
+        };
+      })
+    }
+    reader.readAsDataURL(file)
+  };
+
+  const handleSmallImageRestore = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const newImageData = e.target?.result as string;
+      
+      setScheduleData((prev: any) => {
+        return {
+          ...prev,
+          smallImage: newImageData,
         };
       })
     }
@@ -260,7 +299,9 @@ const AppContent = () => {
                     scheduleData={scheduleData}
                     setScheduleData={setScheduleData}
                     onImageUpload={handleImageUpload}
+                    onSmallImageUpload={handleSmallImageUpload}
                     onImageRestore={handleImageRestore}
+                    onSmallImageRestore={handleSmallImageRestore}
                   />
                 </TabPanel>
 

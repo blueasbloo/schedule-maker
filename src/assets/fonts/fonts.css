@@ -45,3 +45,27 @@
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: 'RetroComputer';
+  src: url('./RetroComputer.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FredokaMedium';
+  src: url('./Fredoka-Medium.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FredokaRegular';
+  src: url('./Fredoka-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

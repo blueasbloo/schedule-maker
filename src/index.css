@@ -39,3 +39,12 @@ input, select, textarea {
 .titan-one-font {
   font-family: 'TitanOne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
+.retro-computer-font {
+  font-family: 'RetroComputer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+.fredoka-medium-font {
+  font-family: 'FredokaMedium', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+.fredoka-regular-font {
+  font-family: 'FredokaRegular', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}

@@ -300,10 +300,10 @@ export const ImageControls: React.FC<ImageControlsProps> = ({
         {/* Scale Control (both modes) */}
         <Box sx={{ mb: 3 }}>
           <Typography gutterBottom sx={{ fontWeight: 500 }}>
-            Scale: {(isSmallBackgroundMode ? characterTransform.scale : backgroundTransform.scale).toFixed(2)}x
+            Scale: {(characterTransform.scale).toFixed(2)}x
           </Typography>
           <Slider
-            value={isSmallBackgroundMode ? characterTransform.scale : backgroundTransform.scale}
+            value={characterTransform.scale}
             onChange={handleScaleChange}
             min={isSmallBackgroundMode ? 0.1 : 0.5}
             max={3}
@@ -355,7 +355,7 @@ export const ImageControls: React.FC<ImageControlsProps> = ({
             </Typography>
             <TextField
               type="number"
-              value={isSmallBackgroundMode ? Math.round(characterTransform.x) : Math.round(backgroundTransform.positionX)}
+              value={Math.round(characterTransform.x)}
               onChange={(e) => handlePositionChange("x", Number(e.target.value) || 0)}
               size="small"
               fullWidth
@@ -378,7 +378,7 @@ export const ImageControls: React.FC<ImageControlsProps> = ({
             </Typography>
             <TextField
               type="number"
-              value={isSmallBackgroundMode ? Math.round(characterTransform.y) : Math.round(backgroundTransform.positionY)}
+              value={Math.round(characterTransform.y)}
               onChange={(e) => handlePositionChange("y", Number(e.target.value) || 0)}
               size="small"
               fullWidth

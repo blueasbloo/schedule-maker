@@ -32,18 +32,19 @@ import {
 } from "@mui/material";
 import { useCustomTheme } from "../../contexts/useCustomTheme";
 import HelpDialog from "../HelpDialog/HelpDialog";
-import { Add, CheckCircle, Delete, Help, Palette, Upload, ExpandMore, Public, ViewModule, Person } from "@mui/icons-material";
+import { Add, CheckCircle, Delete, Help, Palette, Upload, ExpandMore, Public, ViewModule, Person, Info } from "@mui/icons-material";
 import { CustomThemeToggle } from "../LightModeToggle/LightModeToggle";
 import { AVAILABLE_TIMEZONES, DAYS } from "../../constants/dayTime";
 import { format, parseISO } from "date-fns"
 
 
 const SOCIAL_MEDIA_PLATFORMS = [
-  { id: "YouTube", label: "YouTube", placeholder: "@yourchannel" },
-  { id: "Twitch", label: "Twitch", placeholder: "yourstream" },
-  { id: "Twitter", label: "Twitter", placeholder: "@yourusername" },
-  { id: "Discord", label: "Discord", placeholder: "YourServer#1234" },
-  { id: "TikTok", label: "TikTok", placeholder: "@yourusername" },
+  { id: "YouTube", label: "YouTube", placeholder: "" },
+  { id: "Twitch", label: "Twitch", placeholder: "" },
+  { id: "Twitter", label: "Twitter", placeholder: "" },
+  { id: "Discord", label: "Discord", placeholder: "" },
+  { id: "TikTok", label: "TikTok", placeholder: "" },
+  { id: "Other", label: "Other", placeholder: "" },
 ];
 
 const formatDate = (dateString: string) => {
@@ -55,11 +56,19 @@ const formatDate = (dateString: string) => {
   }
 };
 
-const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setScheduleData, onImageUpload, onImageRestore }) => {
+const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ 
+  scheduleData, 
+  setScheduleData, 
+  onImageUpload, 
+  onImageRestore, 
+  onSmallImageUpload, 
+  onSmallImageRestore
+ }) => {
   const [selectedDay, setSelectedDay] = useState("Monday");
   const { currentTheme, setTheme, themes, isDarkMode } = useCustomTheme();
   const [showHelp, setShowHelp] = useState(false);
-  const [hasAttemptedImageLoad, setHasAttemptedImageLoad] = useState(false);
+  const [hasAttemptedBackgroundLoad, setHasAttemptedBackgroundLoad] = useState(false);
+  const [hasAttemptedSmallImageLoad, setHasAttemptedSmallImageLoad] = useState(false);
   useEffect(() => {
     if (scheduleData) {
       const timeoutId = setTimeout(() => {
@@ -76,10 +85,10 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (!hasAttemptedImageLoad && !scheduleData.backgroundImage) {
-        setHasAttemptedImageLoad(true);
+      if (!hasAttemptedBackgroundLoad && !scheduleData.backgroundImage) {
+        setHasAttemptedBackgroundLoad(true);
         
-        const savedImage = localStorage.getItem('schedule-maker-image');
+        const savedImage = localStorage.getItem('schedule-maker-image-background');
         if (savedImage) {
           try {
             const imageData = JSON.parse(savedImage);
@@ -103,13 +112,50 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
           console.log('ScheduleEditor: No saved image found in localStorage');
         }
       } else if (scheduleData.backgroundImage) {
-        setHasAttemptedImageLoad(true);
+        setHasAttemptedBackgroundLoad(true);
       }
     }, 100);
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasAttemptedImageLoad, scheduleData.backgroundImage]);
+  }, [hasAttemptedBackgroundLoad, scheduleData.backgroundImage]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!hasAttemptedSmallImageLoad && !scheduleData.smallImage) {
+        setHasAttemptedSmallImageLoad(true);
+        
+        const savedImage = localStorage.getItem('schedule-maker-image-small');
+        if (savedImage) {
+          try {
+            const imageData = JSON.parse(savedImage);
+            fetch(imageData.data)
+              .then(res => res.blob())
+              .then(blob => {
+                const file = new File([blob], imageData.name, { type: imageData.type });
+                if (onSmallImageRestore) {
+                  onSmallImageRestore(file);
+                } else {
+                  onSmallImageUpload(file);
+                }
+              })
+              .catch(error => {
+                console.error('Failed to restore image:', error);
+              });
+          } catch (error) {
+            console.error('Failed to load saved image:', error);
+          }
+        } else {
+          console.log('ScheduleEditor: No saved image found in localStorage');
+        }
+      } else if (scheduleData.smallImage) {
+        setHasAttemptedSmallImageLoad(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAttemptedSmallImageLoad, scheduleData.smallImage]);
 
   // Schedule Entry Management
   const addScheduleEntry = (day: string) => {
@@ -221,13 +267,17 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
   };
 
   // Image Upload Handler
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: "background" | "small") => {
     const file = event.target.files?.[0]
     if (file) {
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         alert('Image file is too large. Please choose a file smaller than 5MB for automatic saving.');
-        onImageUpload(file);
+        if (type === "background") {
+          onImageUpload(file);
+        } else {
+          onSmallImageUpload(file);
+        }
         return;
       }
 
@@ -249,7 +299,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
           if (dataString.length > 4.5 * 1024 * 1024) {
             alert('Image is large and may not persist between sessions. Consider using a smaller image.');
           } else {
-            localStorage.setItem('schedule-maker-image', dataString);
+            localStorage.setItem(`schedule-maker-image-${type}`, dataString);
           }
         } catch (error) {
           console.error('Failed to save image to localStorage:', error);
@@ -259,13 +309,17 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
         }
       };
       reader.readAsDataURL(file);
-      onImageUpload(file)
+      if (type === "background") {
+        onImageUpload(file);
+      } else {
+        onSmallImageUpload(file);
+      }
     }
   };
 
-  const clearSavedImage = () => {
+  const clearSavedImage = (type: "background" | "small") => {
     try {
-      localStorage.removeItem('schedule-maker-image');
+      localStorage.removeItem(`schedule-maker-image-${type}`);
       setScheduleData((prev) => ({
         ...prev,
         backgroundImage: null,
@@ -741,7 +795,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                       size="small"
                     />
                   </Box>
-                  <Box sx={{ mb: 3 }}>
+                  {/* <Box sx={{ mb: 3 }}>
                     <FormControlLabel
                       control={
                         <Switch
@@ -762,7 +816,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                         </Box>
                       }
                     />
-                  </Box>
+                  </Box> */}
 
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
@@ -808,13 +862,13 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                     </FormControl>
                   </Box>
 
-                  {scheduleData.transparentBackground && (
+                  {/* {scheduleData.transparentBackground && (
                     <Alert severity="info" sx={{ mt: 2 }}>
                       <Typography variant="body2">
                         With transparent background enabled, your uploaded image will cover the entire schedule area.
                       </Typography>
                     </Alert>
-                  )}
+                  )} */}
                 </AccordionDetails>
               </Accordion>
 
@@ -826,7 +880,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                   id="background-image"
                   type="file"
                   accept="image/*"
-                  onChange={handleFileUpload}
+                  onChange={(event) => handleFileUpload(event, "background")}
                   style={{ display: "none" }}
                 />
                 <Box sx={{ display: "flex", gap: 1 }}>
@@ -844,7 +898,7 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                       color="error"
                       startIcon={<Delete />}
                       onClick={() => {
-                        clearSavedImage();
+                        clearSavedImage("background");
                       }}
                       sx={{ minWidth: 'auto' }}
                     >
@@ -857,8 +911,55 @@ const ScheduleEditor: React.FC<ScheduleEditorProps> = ({ scheduleData, setSchedu
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       Image uploaded successfully!
                     </Typography>
+                  </Alert>
+                )}
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                  Custom Image
+                </Typography>
+                <input
+                  id="custom-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleFileUpload(event, "small")}
+                  style={{ display: "none" }}
+                />
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={<Upload />}
+                    onClick={() => document.getElementById("custom-image")?.click()}
+                  >
+                    Upload Image
+                  </Button>
+                  {scheduleData.smallImage && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<Delete />}
+                      onClick={() => {
+                        clearSavedImage("small");
+                      }}
+                      sx={{ minWidth: 'auto' }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </Box>
+                {scheduleData.smallImage && (
+                  <Alert severity="success" icon={<CheckCircle />} sx={{ mt: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Image uploaded successfully!
+                    </Typography>
+                  </Alert>
+                )}
+                {(scheduleData.smallImage || scheduleData.backgroundImage) && (
+                  <Alert severity="info" icon={<Info />} sx={{ mt: 1 }}>
                     <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                      💡 Go to Preview tab to edit your image position, size, and rotation. Both the image and all your edits will be restored automatically when you reopen the app.
+                      Go to Preview tab to edit your image position, size, and rotation. Both the image and all your edits will be restored automatically when you reopen the app.
                     </Typography>
                   </Alert>
                 )}

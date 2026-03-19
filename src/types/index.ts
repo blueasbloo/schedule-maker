@@ -64,9 +64,10 @@ export interface ScheduleData {
   scheduleTitle: string;
   schedule: DaySchedule;
   backgroundImage: string | null;
+  smallImage: string | null;
   imageTransform: ImageTransform;
   backgroundTransform: BackgroundTransform;
-  transparentBackground: boolean;
+  // transparentBackground: boolean;
   schedulePosition: "right" | "left";
 };
 
@@ -75,6 +76,8 @@ export interface ScheduleEditorProps {
   setScheduleData: (data: ScheduleData | ((prev: ScheduleData) => ScheduleData)) => void;
   onImageUpload: (file: File) => void;
   onImageRestore?: (file: File) => void;
+  onSmallImageUpload: (file: File) => void;
+  onSmallImageRestore?: (file: File) => void;
 };
 
 export interface SchedulePreviewProps {

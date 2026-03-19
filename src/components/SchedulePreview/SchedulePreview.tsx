@@ -20,8 +20,33 @@ import {
 import type { BackgroundTransform, ImageTransform, SchedulePreviewProps } from "../../types";
 import ExportModal from "../ExportModal/ExportModal";
 import { useCustomTheme } from "../../contexts/useCustomTheme";
-import { DiscordIcon, TikTokIcon, TwitchIcon, TwitterIcon, YoutubeIcon } from "../../assets/images";
+import { 
+  Background,
+  BowIcon,
+  ButtonIcon,
+  Console,
+  ConsoleTrans,
+  DiscordIcon, 
+  EyeBlueIcon,
+  EyeRedIcon,
+  TikTokIcon, 
+  TwitchIcon, 
+  TwitterIcon, 
+  YoutubeIcon 
+} from "../../assets/images";
 import { ImageControls } from "../ImageControls/ImageControls";
+import { 
+  StyledActivityBox, 
+  StyledEyeBox, 
+  StyledBox, 
+  StyledSmallBox, 
+  StyledActivitySmallBox, 
+  StyledActivityChip, 
+  StyledImageContainerSecond, 
+  StyledImageContainerFirst, 
+  StyledImageContainerThird,
+  StyledWeekRange 
+} from "./SchedulePreview.style";
 
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -29,11 +54,12 @@ const DAY_ABBREV = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const getPlatformIcon = (platform: string) => {
   const platformIcons: { [key: string]: any } = {
-    YouTube: () => <Box paddingTop={0.5}><img src={YoutubeIcon} alt="YouTube" width="18" height="18" /></Box>,
-    Twitch: () => <Box paddingTop={0.5}><img src={TwitchIcon} alt="Twitch" width="18" height="18" /></Box>,
-    Twitter: () => <Box paddingTop={0.5}><img src={TwitterIcon} alt="Twitter" width="18" height="18" /></Box>,
-    Discord: () => <Box paddingTop={0.5}><img src={DiscordIcon} alt="Discord" width="18" height="18" /></Box>,
-    TikTok: () => <Box paddingTop={0.5}><img src={TikTokIcon} alt="TikTok" width="18" height="18" /></Box>,
+    YouTube: () => <Box paddingTop="6px"><img src={YoutubeIcon} alt="YouTube" width="30" height="30" /></Box>,
+    Twitch: () => <Box paddingTop="6px"><img src={TwitchIcon} alt="Twitch" width="30" height="30" /></Box>,
+    Twitter: () => <Box paddingTop="6px"><img src={TwitterIcon} alt="Twitter" width="30" height="30" /></Box>,
+    Discord: () => <Box paddingTop="6px"><img src={DiscordIcon} alt="Discord" width="30" height="30" /></Box>,
+    TikTok: () => <Box paddingTop="6px"><img src={TikTokIcon} alt="TikTok" width="30" height="30" /></Box>,
+    Other: () => <Box paddingTop="6px"><img src={BowIcon} alt="Other" height="20" /></Box>,
   };
 
   return platformIcons[platform];
@@ -93,6 +119,8 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
   const [backgroundDragStart, setBackgroundDragStart] = useState({ x: 0, y: 0 });
 
+  console.log('~ scheduleData', scheduleData);
+
 
   // Date time handlers
   const formatDate = (dateString: string) => {
@@ -144,12 +172,12 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
     return {
       transform: `translate(${x}px, ${y}px) scale(${scaleX}, ${scaleY}) rotate(${rotation}deg)`,
       transformOrigin: "center center",
-      cursor: isDragging ? "grabbing" : scheduleData.backgroundImage ? "grab" : "default",
+      cursor: isDragging ? "grabbing" : scheduleData.smallImage ? "grab" : "default",
     };
   };
 
-  const getTransparentBackgroundStyle = () => {
-    if (!scheduleData.transparentBackground || !scheduleData.backgroundImage) {
+  const getBackgroundStyle = () => {
+    if (!scheduleData.backgroundImage) {
       return {};
     }
     const { positionX, positionY, scale } = scheduleData.backgroundTransform;
@@ -166,7 +194,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
 
   // Small-background control handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scheduleData.backgroundImage || !onImageTransformChange || isExporting) return;
+    if (!scheduleData.smallImage || !onImageTransformChange || isExporting) return;
     e.preventDefault();
     setIsDragging(true);
     setDragStart({
@@ -176,7 +204,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scheduleData.backgroundImage || !onImageTransformChange || isExporting) return;
+    if (!isDragging || !scheduleData.smallImage || !onImageTransformChange || isExporting) return;
     const newX = e.clientX - dragStart.x;
     const newY = e.clientY - dragStart.y;
     onImageTransformChange({
@@ -192,7 +220,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
 
   // Full-background dragging handlers
   const handleBackgroundMouseDown = (e: React.MouseEvent) => {
-    if (!scheduleData.transparentBackground || !scheduleData.backgroundImage || isExporting) 
+    if (!scheduleData.backgroundImage || isExporting) 
       return;
     e.preventDefault();
     setIsDraggingBackground(true);
@@ -204,7 +232,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
   };
 
   const handleBackgroundMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingBackground || !scheduleData.transparentBackground || !scheduleData.backgroundImage || !onBackgroundTransformChange || isExporting)
+    if (!isDraggingBackground || !scheduleData.backgroundImage || !onBackgroundTransformChange || isExporting)
       return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -250,63 +278,32 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
 
   // Activity entry handlers
   const renderActivityTags = (entry: any) => {
-    const tags = [];
+    const tags: any[] = [];
+    const ActivityChip = (label: string) => (
+      tags.push(
+        <StyledActivityChip
+          key={label}
+          label={label.toUpperCase()}
+          size="small"
+          className="retro-computer-font activity-chip"
+        />,
+      )
+    );
 
     if (entry.tags?.collab) {
-      tags.push(
-        <Chip
-          key="collab"
-          label="COLLAB"
-          size="small"
-          className="poetsen-one-font"
-          sx={{
-            bgcolor: currentTheme.colors.secondary,
-            color: currentTheme.colors.tagTextSet?.[1],
-            fontSize: "0.7rem",
-            height: "22px",
-          }}
-        />,
-      )
-    }
-
+      ActivityChip("collab");
+    } 
     if (entry.tags?.announcement) {
-      tags.push(
-        <Chip
-          key="announcement"
-          label="ANNOUNCEMENT"
-          size="small"
-          className="poetsen-one-font"
-          sx={{
-            bgcolor: currentTheme.colors.primary,
-            color: currentTheme.colors.tagTextSet?.[0],
-            fontSize: "0.7rem",
-            height: "22px",
-          }}
-        />,
-      )
+      ActivityChip("announcement");
     }
-
     if (entry.tags?.custom && entry.tags?.customText && entry.tags.customText.trim()) {
-      tags.push(
-        <Chip
-          key="custom"
-          label={entry.tags.customText.toUpperCase()}
-          size="small"
-          className="poetsen-one-font"
-          sx={{
-            bgcolor: currentTheme.colors.tertiary,
-            color: currentTheme.colors.tagTextSet?.[2],
-            fontSize: "0.7rem",
-            height: "22px",
-          }}
-        />,
-      )
+      ActivityChip(entry.tags.customText);
     }
 
     return tags;
   }
 
-  const renderTimeBadges = (entry: any, dayIndex: number) => {
+  const renderTimeBadges = (entry: any, dayIndex: number, smallCard?: boolean) => {
     const enabledTimezones = scheduleData.timezones.filter((tz) => tz.enabled);
 
     return enabledTimezones.map((timezone, index) => {
@@ -317,21 +314,22 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
 
       const dayIndicator = getDayIndicatorLetter(dayIndex, timeData.dayDiff);
 
+
       return (
         <Chip
           key={timezone.id}
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Typography className="poetsen-one-font" variant="caption">
+              <Typography className="poetsen-one-font" variant="caption" sx={{ fontSize: smallCard ? "10px" : "12px" }}>
                 {formatTime(timeData.time)} ({timezone.abbreviation.toUpperCase()})
               </Typography>
               {dayIndicator && (
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: "0.55rem",
+                    fontSize: smallCard ? "8px" : "10px",
                     fontWeight: 700,
-                    opacity: 0.9,
+                    opacity: 1,
                     bgcolor: "rgba(255, 255, 255, 0.2)",
                     px: 0.5,
                     py: 0.25,
@@ -379,117 +377,122 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       <Chip
         label={getActualDayAbbrev(dayIndex)}
         size="small"
-        className="titan-one-font"
+        className="retro-computer-font"
         sx={{
           bgcolor: currentTheme.colors.primarySet?.[dayIndex % (currentTheme.colors.primarySet.length || 1)] || currentTheme.colors.primary,
           color: currentTheme.colors.textSet?.[dayIndex % (currentTheme.colors.textSet.length || 1)] || "white",
+          border: `2px solid ${currentTheme.colors.cardBorder}`,
           fontSize: "0.8rem",
-          boxShadow: scheduleData.transparentBackground ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           zIndex: 1,
-          rotate: "-25deg",
+          rotate: "-20deg",
           marginLeft: "-10px",
           marginTop: "-5px",
-          width: "50px"
+          height: "30px",
+          width: "60px"
         }}
       />
     );
 
-    const DayTab = () => (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          minWidth: 80,
-          position: "relative",
-          alignSelf: "center",
-        }}
-      >
-        <Paper
-          sx={{
-            width: 48,
-            height: 48,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "white",
-            borderRadius: 2,
-            backdropFilter: "blur(2px)",
-          }}
-        >
-          <Typography
-            variant="h5"
-            className="coiny-font"
+    const DayTab = ({ dayIndex }: { dayIndex: number }) => {
+      if (dayIndex === 6) {
+        return (
+          <Box
             sx={{
-              color: currentTheme.colors.primary,
-            }}
-          >
-            {dayDate}
-          </Typography>
-        </Paper>
-
-        {/* Dashed connecting line */}
-        {/* <Box
-          sx={{
-            position: "absolute",
-            right: -24,
-            top: "50%",
-            width: 24,
-            height: 2,
-            borderTop: `2px dashed ${currentTheme.colors.primary}40`,
-            transform: "translateY(-50%)",
-          }}
-        /> */}
-      </Box>
-    );
-
-    if (dayEntries.length === 0) {
-      // Default activity
-      return (
-        <Box sx={{ display: "flex", margin: "8px 0", height: "95px" }}>
-          <DayAbbreviationChip dayIndex={dayIndex} />
-          <Box 
-            sx={{ 
-              display: "flex", 
-              alignItems: "flex-start", 
-              gap: 2, 
-              zIndex: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              minWidth: 85,
               position: "absolute",
-              width: "54%",
+              alignSelf: "center",
+              zIndex: 200,
             }}
           >
-            <Card
+            <Paper
               sx={{
-                flex: 1,
-                bgcolor: cardBgColor,
-                borderRadius: 2,
-                border: `3px solid ${cardBorderColor}`,
-                height: 95,
-                backdropFilter: "blur(2px)",
+                width: 60,
+                height: 60,
                 display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: currentTheme.colors.primarySet,
+                borderRadius: 2,
+                border: `2.5px solid ${cardBorderColor}`,
+                backdropFilter: "blur(2px)",
               }}
             >
-              <DayTab />
-              <CardContent sx={{ display: "flex", p: 2, "&:last-child": { pb: 2 } }}>
-                <Box sx={{ display: "flex", flexDirection: "column", alignSelf: "center" }}>
-                  <Typography className="titan-one-font" variant="h5" sx={{ color: currentTheme.colors.textPrimary }}>
-                    No Activities
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
+              <Typography
+                className="retro-computer-font"
+                sx={{
+                  color: "#E5E5E5",
+                  textAlign: "center",
+                  fontSize: "18px",
+                  lineHeight: "20px",
+                }}
+              >
+                {getActualDayAbbrev(dayIndex)}<br />
+                {dayDate}
+              </Typography>
+            </Paper>
           </Box>
-        </Box>
-      );
-    }
-
-    if (dayEntries.length === 1) {
-      const entry = dayEntries[0]
-
-      if (entry.type === "offline") {
-         const offlineText = entry.offlineText || "OFFLINE";
+        );
+      } else {
         return (
-          <Box sx={{ display: "flex", margin: "8px 0", height: "95px" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              minWidth: 85,
+              position: "absolute",
+              alignSelf: "center",
+              zIndex: 200,
+              top: -5,
+              left: 88,
+            }}
+          >
+            <Paper
+              sx={{
+                width: 120,
+                height: 30,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: currentTheme.colors.primarySet,
+                borderTop: "none",
+                borderBottomLeftRadius: "8px",
+                borderBottomRightRadius: "8px",
+                border: `2.5px solid ${cardBorderColor}`,
+                backdropFilter: "blur(2px)",
+              }}
+            >
+              <Typography
+                className="retro-computer-font"
+                sx={{
+                  color: "#E5E5E5",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                }}
+              >
+                {getActualDayAbbrev(dayIndex)} • {dayDate}
+              </Typography>
+            </Paper>
+          </Box>
+        );
+      }
+    };
+
+    const OfflineCard = (text: string) => {
+      if (dayIndex === 6) {
+        return (
+          <Box 
+            sx={{ 
+              display: "flex", margin: "8px 0", 
+              height: "120px", 
+              width: "960px",
+              }}
+          >
             <DayAbbreviationChip dayIndex={dayIndex} />
             <Box 
               sx={{ 
@@ -498,76 +501,222 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
                 gap: 2, 
                 zIndex: 0,
                 position: "absolute",
-                width: "54%",
+                width: "960px"
               }}
             >
+              <img
+                src={BowIcon}
+                alt="Bow Icon"
+                style={{
+                  position: "absolute",
+                  zIndex: 100,
+                  top: 44,
+                  right: 332
+                }}
+              />
+              <StyledEyeBox className="blue-eye"
+                sx={{ 
+                  left: -15,
+                  bottom: -20
+                }}
+              >
+                <img src={EyeBlueIcon} alt="Blue Eye" />
+              </StyledEyeBox>
+              <img src={ButtonIcon} alt="Button Icon"
+                style={{
+                  position: "absolute",
+                  zIndex: 100,
+                  top: 56,
+                  left: 32,
+                  transform: "rotate(90deg)"
+                }}
+               />
+              <StyledBox className="halftone">
+                <div className="inner-halftone">
+                  {text ? (
+                    <>
+                      <Typography
+                        className="retro-computer-font"
+                        sx={{ display: "flex", alignItems: "center", fontSize: "26px", gap: 2 }}
+                      >
+                        <span style={{ fontSize: "14px", letterSpacing: "4px" }}>
+                          • VICTORIA IS •
+                        </span>{text}
+                      </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Typography className="retro-computer-font" sx={{ fontSize: "30px" }}>
+                        NO ACTIVITIES
+                      </Typography>
+                    </>
+                  )}
+                </div>
+              </StyledBox>
+              <Box
+                sx={{
+                  position: "absolute",
+                  right: 45,
+                  bottom: 12,
+                  zIndex: 50,
+                }}
+              >
+                <img 
+                  src={ConsoleTrans} 
+                  alt="Console Trans Background" 
+                  style={{ 
+                    display: "flex",
+                    height: "100%",
+                    width: "100%"
+                  }} 
+                />
+              </Box>
               <Card
                 sx={{
                   flex: 1,
-                  bgcolor: currentTheme.colors.primary,
-                  borderRadius: 2,
-                  height: 95,
+                  bgcolor: cardBgColor,
+                  borderRadius: 4,
+                  border: `1px solid ${cardBorderColor}`,
+                  height: 120,
+                  backdropFilter: "blur(2px)",
                   display: "flex",
-                  position: "relative",
-                  overflow: "hidden",
                 }}
               >
-                <DayTab />
-                <CardContent 
-                  sx={{ 
-                    p: 2, 
-                    "&:last-child": { pb: 2 },
-                    position: "relative",
-                    minHeight: 80,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                {/* <DayTab /> */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right:-60,
+                    top: 0,
+                    bottom: -2,
+                    zIndex: 90,
+                    backgroundColor: cardBgColor
                   }}
                 >
-                  {/* Repeating offline text pattern background */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: -70,
-                      left: -90,
-                      bottom: -180,
-                      right: -760,
+                  <img 
+                    src={Background} 
+                    alt="Offline Card Background" 
+                    style={{ 
                       display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                      transform: "rotate(12deg)",
-                      opacity: 0.3,
-                      pointerEvents: "none",
-                      overflow: "hidden",
+                      height: "98%",
+                      width: "98%"
+                    }} 
+                  />
+                </Box>
+              </Card>
+            </Box>
+          </Box>
+        );
+      } else {
+        return (
+          <Box 
+            sx={{ 
+              display: "flex", margin: "8px 0", 
+              height: "300px", 
+              width:"300px" 
+              }}
+          >
+            <DayAbbreviationChip dayIndex={dayIndex} />
+            <Box 
+              sx={{ 
+                display: "flex", 
+                alignItems: "flex-start", 
+                gap: 2, 
+                zIndex: 0,
+                position: "absolute",
+                width: "300px",
+              }}
+            >
+              <img
+                src={BowIcon}
+                alt="Bow Icon"
+                style={{
+                  position: "absolute",
+                  zIndex: 100,
+                  left: 126,
+                  bottom: 72,
+                  transform: "rotate(2deg)"
+                }}
+              />
+              <StyledEyeBox className="blue-eye"
+                sx={{ 
+                  left: -20,
+                  bottom: 115,
+                }}
+              >
+                <img src={EyeBlueIcon} alt="Blue Eye" />
+              </StyledEyeBox>
+              <Card
+                sx={{
+                  flex: 1,
+                  bgcolor: cardBgColor,
+                  borderRadius: "18px",
+                  border: `3px solid ${cardBorderColor}`,
+                  height: 300,
+                  backdropFilter: "blur(2px)",
+                  display: "flex",
+                  transform: "rotate(2deg)"
+                }}
+              >
+                {/* <DayTab /> */}
+                
+                <CardContent sx={{ display: "flex", p: 0, "&:last-child": { pb: 0 } }}>
+                  <img src={ButtonIcon} alt="Button Icon"
+                    style={{
+                      position: "absolute",
+                      zIndex: 100,
+                      top: 32,
+                      left: 134,
                     }}
-                  >
-                    {/* Create multiple rows of offline text */}
-                    {Array.from({ length: 8 }).map((_, rowIndex) => (
-                      <Box
-                        key={rowIndex}
-                        sx={{
-                          display: "flex",
-                          gap: "10px",
-                          whiteSpace: "nowrap",
-                          transform: rowIndex % 2 === 0 ? "translateX(0)" : "translateX(-60px)",
-                        }}
-                      >
-                        {Array.from({ length: 12 }).map((_, colIndex) => (
-                          <Typography
-                            key={colIndex}
-                            className="poetsen-one-font"
-                            sx={{
-                              color: "white",
-                              fontSize: "1.5rem",
-                              letterSpacing: "0.1em",
-                              userSelect: "none",
-                            }}
+                  />
+                  <StyledSmallBox className="halftone-small-box">
+                    <div className="inner-halftone-small-box">
+                      {text ? (
+                        <>
+                          <Typography 
+                            className="retro-computer-font"
+                            sx={{ fontSize: "12px", letterSpacing: "4px" }}
                           >
-                            {offlineText}
+                            • VICTORIA IS •
                           </Typography>
-                        ))}
-                      </Box>
-                    ))}
+                          <Typography 
+                            className="retro-computer-font" 
+                            sx={{ fontSize: "24px" }}
+                          >
+                            {text}
+                          </Typography>
+                        </>
+                      ) : (
+                        <Typography 
+                          className="retro-computer-font" 
+                          sx={{ fontSize: "24px" }}
+                        >
+                          NO ACTIVITIES
+                        </Typography>
+                      )}
+                      <div style={{ height: "40px", width: "80px", textAlign: "center" }}>
+                        <Typography
+                          className="fredoka-regular-font"
+                          sx={{ fontSize: "12px", opacity: 0.5 }}
+                        >
+                          / / / /
+                        </Typography>
+                      </div>
+                    </div>
+                    <div className="inner-pattern-small-box"></div>
+                  </StyledSmallBox>
+                  <Box>
+                    <img 
+                      src={Console} 
+                      alt="Offline Card" 
+                      style={{ 
+                        position: "absolute",
+                        left: 1,
+                        bottom: 0,
+                        width: "295px",
+                        zIndex: 100,
+                      }} 
+                    />
                   </Box>
                 </CardContent>
               </Card>
@@ -575,377 +724,558 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           </Box>
         );
       }
+    };
 
-      return (
-        <Box sx={{ display: "flex", margin: "8px 0", height: "95px" }}>
-          <DayAbbreviationChip dayIndex={dayIndex} />
+    const ActivityCard = (entryData: any, multiple: boolean) => {
+      const Divider = ({ rotate, width }: { rotate: string, width: string }) => {
+        return (
+          <div style={{ rotate: rotate, height: "40px", width: width, textAlign: "center" }}>
+            <Typography
+              className="fredoka-regular-font"
+              sx={{ fontSize: "14px", opacity: 0.5 }}
+            >
+              / / / /
+            </Typography>
+          </div>
+        );
+      };
+      if (dayIndex === 6) {
+        return (
           <Box 
             sx={{ 
-              display: "flex", 
-              alignItems: "flex-start", 
-              gap: 2, 
-              zIndex: 0,
-              position: "absolute",
-              width: "54%",
-            }}
+              display: "flex", margin: "8px 0", 
+              height: "120px", 
+              width: "960px",
+              }}
           >
-            <Card
-              sx={{
-                flex: 1,
-                bgcolor: cardBgColor,
-                borderRadius: 2,
-                border: `3px solid ${cardBorderColor}`,
-                height: 95,
-                backdropFilter: "blur(2px)",
-                display: "flex",
-                overflow: "visible"
+            <Box 
+              sx={{ 
+                display: "flex", 
+                alignItems: "flex-start", 
+                gap: 2, 
+                zIndex: 0,
+                position: "absolute",
+                width: "960px"
               }}
             >
-              <DayTab />
-              <CardContent sx={{ p: "6px 8px", "&:last-child": { pb: 1 }, width: "100%", overflow: "visible" }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", alignSelf: "center", flex: 1, mr: 2 }}>
-                    <Typography variant="h5" 
-                      className="titan-one-font"
-                      sx={{
-                        color: entry.memberOnly ? currentTheme.colors.textSecondary : currentTheme.colors.textPrimary,
-                      }}
-                      >
-                      {entry.title}
-                    </Typography>
-                    <Typography variant="body1" 
-                      className="lilita-one-font"
-                      sx={{ 
-                        color: entry.memberOnly ? currentTheme.colors.textSecondary : currentTheme.colors.textPrimary, mb: 1 
-                      }}
-                    >
-                      {entry.subtitle}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-end" }}>
-                    {renderTimeBadges(entry, dayIndex)}
-                  </Box>
-                </Box>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", position: "absolute", bottom: -12, }}>
-                  {renderActivityTags(entry)}
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
-      );
-    }
+              <StyledActivityBox className="halftone-activity">
+                <Box className="inner-halftone-activity">
+                  {multiple ? (
+                    <>
+                      {entryData.slice(0, 2).map((entry: any) => (
+                        <Box sx={{ display: "flex", flex: 1, gap: 2 }}>
+                          <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <Divider rotate="90deg" width={entry.subtitle ? "50px" : "104px"} />
+                            <Box>
+                              <Typography
+                                className="fredoka-medium-font"
+                                variant="h3"
+                                sx={{ fontSize: "24px", lineHeight: 0.9 }}
+                              >
+                                {entry.title}
+                              </Typography>
 
-    // Multiple activities
-    return (
-      <Box sx={{ display: "flex", margin: "8px 0", height: "95px" }}>
-        <DayAbbreviationChip dayIndex={dayIndex} />
-        <Box 
-          sx={{ 
-            display: "flex", 
-            alignItems: "flex-start", 
-            gap: 2, 
-            zIndex: 0,
-            position: "absolute",
-            width: "54%",
-          }}
-        >
-          <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-            {dayEntries.slice(0, 2).map((entry, index) => (
-              <Card
-                key={entry.id}
-                sx={{
-                  bgcolor: entry.type === "offline" ? currentTheme.colors.primary : cardBgColor,
-                  borderRadius: 2,
-                  border: entry.type === "offline" ? "none" : `3px solid ${cardBorderColor}`,
-                  height: 95,
-                  backdropFilter: "blur(2px)",
-                  display: "flex",
-                  overflow: entry.type === "offline" ? "hidden" : "visible",
-                  position: entry.type === "offline" ? "relative" : "unset",
-                }}
-              >
-                { index === 0 && <DayTab />}
-                { entry.type === "offline" ? (
-                  <CardContent 
-                    sx={{ 
-                      p: 2, 
-                      "&:last-child": { pb: 2 },
-                      position: "relative",
-                      minHeight: 80,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {/* Repeating OFFLINE pattern background */}
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: -70,
-                        left: -90,
-                        right: -400,
-                        bottom: -60,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                        transform: "rotate(12deg)",
-                        opacity: 0.3,
-                        pointerEvents: "none",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {/* Create multiple rows of OFFLINE text */}
-                      {Array.from({ length: 8 }).map((_, rowIndex) => (
-                        <Box
-                          key={rowIndex}
-                          sx={{
-                            display: "flex",
-                            gap: "10px",
-                            whiteSpace: "nowrap",
-                            transform: rowIndex % 2 === 0 ? "translateX(0)" : "translateX(-60px)",
-                          }}
-                        >
-                          {Array.from({ length: 12 }).map((_, colIndex) => (
-                            <Typography
-                              key={colIndex}
-                              className="poetsen-one-font"
-                              sx={{
-                                color: "white",
-                                fontSize: "1.5rem",
-                                letterSpacing: "0.1em",
-                                userSelect: "none",
-                              }}
-                            >
-                              {entry.offlineText}
-                            </Typography>
-                          ))}
+                              <Typography 
+                                className="fredoka-medium-font"
+                                variant="h6"
+                                sx={{ fontSize: "14px", lineHeight: 1.2 }}>
+                                {entry.subtitle}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box style={{ display: "flex", alignItems: "center" }}>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-start" }}>
+                              {renderTimeBadges(entry, dayIndex)}
+                            </Box>
+                          </Box>
+                          <Box sx={{ 
+                            display: "flex", 
+                            flexWrap: "wrap", 
+                            position: "absolute", bottom: -24,
+                            paddingLeft: "15px",
+                            filter: "drop-shadow(1px 0px 3px rgba(25, 25, 25, 0.45))"
+                          }}>
+                            {renderActivityTags(entry)}
+                          </Box>
                         </Box>
                       ))}
-                    </Box>
-                  </CardContent>
-                ) : (
-                  <CardContent sx={{ p: "6px 8px", "&:last-child": { pb: 1 }, width: "100%", overflow: "visible", paddingLeft: index === 1 ? "20px" : "8px" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <Box sx={{ display: "flex", flexDirection: "column", alignSelf: "center", flex: 1, mr: 2 }}>
-                        <Typography variant="body1"
-                          className="titan-one-font"
-                          sx={{ 
-                            fontSize: "0.9rem",
-                            color: entry.memberOnly ? currentTheme.colors.textSecondary : currentTheme.colors.textPrimary, mb: 0.5 
-                          }}
-                        >
-                          {entry.title}
-                        </Typography>
-                        <Typography variant="body2" 
-                          className="lilita-one-font"
-                          sx={{ 
-                            fontSize: "0.85rem",
-                            color: entry.memberOnly ? currentTheme.colors.textSecondary : currentTheme.colors.textPrimary, mb: 1, display: "block" 
-                          }}
-                        >
-                          {entry.subtitle}
-                        </Typography>
+                    </>
+                  ) : (
+                    <>
+                      <Box style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <Divider rotate="90deg" width="80px" />
+                        <Box>
+                          <Typography
+                            className="fredoka-medium-font"
+                            variant="h3"
+                            sx={{ fontSize: "36px", lineHeight: 0.9 }}
+                          >
+                            {entryData.title}
+                          </Typography>
+
+                          <Typography 
+                            className="fredoka-medium-font"
+                            variant="h6"
+                            sx={{ fontSize: "16px" }}>
+                            {entryData.subtitle}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5 }}>
-                        {renderTimeBadges(entry, dayIndex)}
+
+                      <Box style={{ display: "flex", alignItems: "center" }}>
+                        <Divider rotate="90deg" width="80px" />
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, alignItems: "flex-start" }}>
+                          {renderTimeBadges(entryData, dayIndex)}
+                        </Box>
                       </Box>
-                    </Box>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", position: "absolute", bottom: -20, mb: 1 }}>
+                      <Box sx={{ 
+                        display: "flex", 
+                        flexWrap: "wrap", 
+                        position: "absolute", bottom: -24,
+                        paddingLeft: "15px",
+                        filter: "drop-shadow(1px 0px 3px rgba(25, 25, 25, 0.45))"
+                      }}>
+                        {renderActivityTags(entryData)}
+                      </Box>
+                    </>
+                  )}
+                </Box>
+
+              </StyledActivityBox>
+
+              <StyledEyeBox className="red-eye"
+                sx={{ 
+                  top: -15,
+                  right: 215,
+                }}
+              >
+                <img src={EyeRedIcon} alt="Red Eye" />
+              </StyledEyeBox>
+
+              <DayTab dayIndex={dayIndex} />
+
+              <Card
+                sx={{
+                  flex: 1,
+                  bgcolor: cardBgColor,
+                  borderRadius: 4,
+                  border: `3px solid ${cardBorderColor}`,
+                  height: 120,
+                  backdropFilter: "blur(2px)",
+                  display: "flex",
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    right:-60,
+                    top: 0,
+                    bottom: -2,
+                    zIndex: 90,
+                    backgroundColor: cardBgColor
+                  }}
+                />
+              </Card>
+            </Box>
+          </Box>
+        );
+      } else {
+        return (
+          <Box 
+            sx={{ 
+              display: "flex", margin: "8px 0", 
+              height: "300px", 
+              width:"300px" 
+              }}
+          >
+            <Box 
+              sx={{ 
+                display: "flex", 
+                alignItems: "flex-start", 
+                gap: 2, 
+                zIndex: 0,
+                position: "absolute",
+                width: "300px",
+              }}
+            >
+              <StyledEyeBox className="red-eye"
+                sx={{ 
+                  right: -20,
+                  bottom: 50,
+                }}
+              >
+                <img src={EyeRedIcon} alt="Red Eye" />
+              </StyledEyeBox>
+              {(Array.isArray(entryData) ? entryData : [entryData]).slice(0, 2).map((entry: any, index: number) => (
+                <>
+                  {multiple ? (
+                    <Box sx={{ 
+                      display: "flex",
+                      position: "absolute",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      filter: "drop-shadow(1px 0px 3px rgba(25, 25, 25, 0.45))",
+                      top: index === 0 ? 112 : 268,
+                      right: -24,
+                      zIndex: 200,
+                      transform: "rotate(-4deg)"
+                    }}>
                       {renderActivityTags(entry)}
                     </Box>
-                  </CardContent>
-                )}
+                  ) : (
+                    <Box sx={{ 
+                      display: "flex",
+                      position: "absolute",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      filter: "drop-shadow(1px 0px 3px rgba(25, 25, 25, 0.45))",
+                      bottom: 8,
+                      right: 14,
+                      zIndex: 200,
+                      transform: "rotate(-4deg)"
+                    }}>
+                      {renderActivityTags(entry)}
+                    </Box>
+                  )}
+                </>
+              ))}
+              <Card
+                sx={{
+                  flex: 1,
+                  bgcolor: cardBgColor,
+                  borderRadius: 4,
+                  border: `3px solid ${cardBorderColor}`,
+                  height: 300,
+                  backdropFilter: "blur(2px)",
+                  display: "flex",
+                  transform: "rotate(2deg)",
+                  zIndex: 10
+                }}
+              >
+                <DayTab dayIndex={dayIndex} />
+                
+                <CardContent sx={{ display: "flex", p: 0, "&:last-child": { pb: 0 } }}>
+                  <StyledActivitySmallBox className="halftone-activity-small-box">
+                    <Box className="inner-halftone-activity-small-box">
+                      {multiple ? (
+                        <>
+                          {entryData.slice(0, 2).map((entry: any, index: number) => (
+                            <Box>
+                              <Box style={{ paddingTop: index === 0 ? "20px" : "0" }}>
+                                <Typography
+                                  className="fredoka-medium-font"
+                                  sx={{ fontSize: "18px", lineHeight: 0.9 }}
+                                >
+                                  {entry.title}
+                                </Typography>
+
+                                <Typography 
+                                  className="fredoka-medium-font"
+                                  sx={{ fontSize: "12px", lineHeight: 1.2 }}>
+                                  {entry.subtitle}
+                                </Typography>
+                              </Box>
+
+                              <Box style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                <Box 
+                                  sx={{ 
+                                    display: "flex", 
+                                    gap: "4px", 
+                                    alignItems: "flex-start",
+                                    flexWrap: "wrap",
+                                    justifyContent: "center",
+                                    marginTop: "4px",
+                                    marginBottom: index === 1 ? "10px" : "0"
+                                  }}
+                                >
+                                  {renderTimeBadges(entry, dayIndex, true)}
+                                </Box>
+                                {index === 0 && (
+                                  <hr style={{
+                                    margin: "10px 0",
+                                    border: 0,
+                                    width: "220px",
+                                    height: "1.2px",
+                                    backgroundImage: "linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0))"
+                                  }}/>
+                                )}
+                              </Box>
+                            </Box>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <Box style={{ paddingTop: "20px" }}>
+                            <Typography
+                              className="fredoka-medium-font"
+                              sx={{ fontSize: "26.5px", lineHeight: 0.9, marginBottom: "5px" }}
+                            >
+                              {entryData.title}
+                            </Typography>
+
+                            <Typography 
+                              className="fredoka-medium-font"
+                              sx={{ fontSize: "14px" }}>
+                              {entryData.subtitle}
+                            </Typography>
+                          </Box>
+
+                          <Box style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            <hr style={{
+                              marginBottom: "10px",
+                              border: 0,
+                              width: "220px",
+                              height: "1.2px",
+                              backgroundImage: "linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0))"
+                            }}/>
+                            <Box 
+                              sx={{ 
+                                display: "flex", 
+                                gap: 0.8, 
+                                alignItems: "flex-start",
+                                flexWrap: "wrap",
+                                justifyContent: "center",
+                                marginBottom: "4px"
+                              }}
+                            >
+                              {renderTimeBadges(entryData, dayIndex)}
+                            </Box>
+                            <Divider rotate="0deg" width="80px" />
+                          </Box>
+                        </>
+                      )}
+                    </Box>
+                  </StyledActivitySmallBox>
+                </CardContent>
               </Card>
-            ))}
+              <Card
+                sx={{
+                  flex: 1,
+                  bgcolor: cardBgColor,
+                  borderRadius: 4,
+                  border: `3px solid ${cardBorderColor}`,
+                  height: 300,
+                  width: 300,
+                  backdropFilter: "blur(2px)",
+                  display: "flex",
+                  transform: "rotate(-4deg)",
+                  position: "absolute",
+                  zIndex: 0
+                }}
+              >
+                <CardContent sx={{ display: "flex", p: 0, "&:last-child": { pb: 0 } }}>
+                  <StyledActivitySmallBox className="halftone-activity-small-box-behind" />
+                </CardContent>
+              </Card>
+            </Box>
           </Box>
-        </Box>
-      </Box>
-    );
+        );
+      }
+    };
+
+    if (dayEntries.length === 0) {
+      return OfflineCard("");
+    }
+
+    if (dayEntries.length === 1) {
+      const entry = dayEntries[0]
+
+      if (entry.type === "offline") {
+        const offlineText = entry.offlineText || "OFFLINE";
+        return OfflineCard(offlineText);
+      }
+
+      return ActivityCard(entry, false);
+    }
+
+    return ActivityCard(dayEntries, true);
   }
 
   // Determine layout order based on schedule position
   const isScheduleOnLeft = scheduleData.schedulePosition === "left";
 
-  const renderImageSection = () => (
-    <Box
-      sx={{
-        width: 680,
-        height: "100%",
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden",
-      }}
-    >
-      {!scheduleData.backgroundImage && (
-        <Box sx={{ textAlign: "center", color: "rgba(255, 255, 255, 0.8)" }}>
-          <Typography variant="h2" sx={{ fontSize: "4rem", mb: 2 }}>
-            <InsertPhoto sx={{ width: "2em", height: "2em", opacity: "90%" }} />
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-            Upload your image
-          </Typography>
-          <Typography variant="subtitle1">in the Editor tab</Typography>
-        </Box>
-      )}
-      {scheduleData.backgroundImage && !scheduleData.transparentBackground ? (
-        <Box
-          component="img"
-          src={scheduleData.backgroundImage}
-          alt="Character/Avatar"
-          sx={{
+  const renderImageSection = () => {
+    return (
+      <>
+        <img
+          src={BowIcon}
+          alt="Bow Icon"
+          style={{
             position: "absolute",
-            maxWidth: "none",
-            userSelect: "none",
-            ...getImageTransformStyle(),
+            zIndex: 50,
+            left: 512,
+            bottom: 400,
+            transform: "rotate(2deg)",
+            height: 34,
           }}
-          onMouseDown={handleMouseDown}
-          draggable={false}
         />
-      ) : (
-        <></>
-      )}
+        <StyledImageContainerFirst>
+          <Box className="container-box-image">
+            {!scheduleData.backgroundImage && !scheduleData.smallImage && (
+              <Box sx={{ textAlign: "center", color: "#473c3a" }}>
+                <Typography variant="h2" sx={{ fontSize: "4rem", mb: 2 }}>
+                  <InsertPhoto sx={{ width: "2em", height: "2em", opacity: "90%" }} />
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  Upload your image
+                </Typography>
+                <Typography variant="subtitle1">in the Editor tab</Typography>
+              </Box>
+            )}
+            {scheduleData.smallImage ? (
+              <Box
+                component="img"
+                src={scheduleData.smallImage}
+                alt="Character/Avatar"
+                sx={{
+                  position: "absolute",
+                  maxWidth: "none",
+                  userSelect: "none",
+                  ...getImageTransformStyle(),
+                }}
+                onMouseDown={handleMouseDown}
+                draggable={false}
+              />
+                // <Box
+                //   sx={{
+                //     backgroundColor: "#F4E0DF"
+                //   }}
+                // >
 
-      {/* Artist Credit and Social Media */}
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: 16,
-          left: 16,
-          right: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 1.5,
-        }}
-      >
-        {/* Artist Credit */}
-        <Box
-          sx={{
-            bgcolor: currentTheme.colors.primary,
-            color: "white",
-            px: 2,
-            py: 1,
-            fontSize: "0.75rem",
-            alignSelf: "flex-start",
-            fontFamily: "PoetsenOne, sans-serif",
-            height: "32px",
-            position: "relative",
-            '::after': {
-              content: '""',
-              position: "absolute",
-              height: "32px",
-              width: 0,
-              top: 0,
-              right: "-15px",
-              borderBottom: "16px solid transparent",
-              borderLeft: `16px solid ${currentTheme.colors.primary}`,
-              borderTop: "16px solid transparent",
-            }
-          }}
-        >
-          {scheduleData.showArtist ? scheduleData.artistName : ""}
-        </Box>
+                // </Box>
+              // </Box>
+            ) : (
+              <></>
+            )}
 
-        {/* Social Media Handles */}
-        {scheduleData.socialMediaHandles.filter((handle) => handle.enabled && handle.handle.trim()).length > 0 && (
+            {/* Image Controls Button */}
+            {scheduleData.smallImage && onImageTransformChange && !isExporting && (
+              <IconButton
+                data-testid="settings-icon"
+                onClick={() => setShowImageControls(true)}
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  bgcolor: "rgba(255, 255, 255, 0.8)",
+                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.9)" },
+                  zIndex: 100,
+                }}
+              >
+                <Settings sx={{ color: "#473c3a" }}/>
+              </IconButton>
+            )}
+
+            {/* Full-background Controls Button */}
+            {scheduleData.backgroundImage && onBackgroundTransformChange && !isExporting && (
+              <IconButton
+                data-testid="settings-icon"
+                onClick={() => setShowBackgroundControls(true)}
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 32,
+                  bgcolor: "rgba(255, 255, 255, 0.8)",
+                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.9)" },
+                  zIndex: 100,
+                }}
+              >
+                <Settings sx={{ color: "#473c3a" }}/>
+              </IconButton>
+            )}
+          </Box>
+        </StyledImageContainerFirst>
+        <StyledImageContainerSecond>
+          <Box className="container-box-dashed"></Box>
+        </StyledImageContainerSecond>
+        <StyledImageContainerThird>
+          <Box className="container-box-dots"></Box>
+        </StyledImageContainerThird>
+      </>
+    )
+  };
+
+  const renderSocialMedia = () => {
+    return (
+      <>
+        {/* Artist Credit and Social Media */}
           <Box
             sx={{
+              position: "absolute",
+              bottom: 10,
+              right: 30,
               display: "flex",
-              flexWrap: "wrap",
-              gap: 1,
-              maxWidth: "100%",
+              flexDirection: "row",
+              gap: 1.5,
             }}
           >
-            {scheduleData.socialMediaHandles
-              .filter((handle) => handle.enabled && handle.handle.trim())
-              .map((handle) => {
-                const IconComponent = getPlatformIcon(handle.platform);
-                return (
-                  <Box
-                    key={handle.id}
-                    sx={{
-                      bgcolor: currentTheme.colors.cardBackground,
-                      color: currentTheme.colors.textPrimary,
-                      px: 1.5,
-                      borderRadius: 2,
-                      fontSize: "0.625rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      backdropFilter: "blur(2px)",
-                      border: `2px solid ${currentTheme.colors.cardBorder}`,
-                      height: "24px",
-                    }}
-                  >
-                    <IconComponent sx={{ fontSize: 12 }} />
-                    <Typography
-                      className="poetsen-one-font"
-                      variant="caption"
-                      sx={{
-                        fontSize: "0.625rem",
-                        color: currentTheme.colors.textPrimary,
-                      }}
-                    >
-                      {handle.handle}
-                    </Typography>
-                  </Box>
-                )
-              })}
+            {/* Artist Credit */}
+            <Typography 
+              className="fredoka-regular-font" 
+              sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                color: "rgba(244, 224, 223, 0.9)",
+                fontSize: "20px",
+              }}
+            >
+              ILLUST. {scheduleData.showArtist ? scheduleData.artistName : ""}
+            </Typography>
+
+            {/* Social Media Handles */}
+            {scheduleData.socialMediaHandles.filter((handle) => handle.enabled && handle.handle.trim()).length > 0 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                  maxWidth: "100%",
+                }}
+              >
+                {scheduleData.socialMediaHandles
+                  .filter((handle) => handle.enabled && handle.handle.trim())
+                  .map((handle) => {
+                    const IconComponent = getPlatformIcon(handle.platform);
+                    return (
+                      <Box
+                        key={handle.id}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px"
+                        }}
+                      >
+                        <IconComponent />
+                        <Typography
+                          className="fredoka-regular-font"
+                          variant="caption"
+                          sx={{ fontSize: "20px", color: "rgba(244, 224, 223, 0.9)" }}
+                        >
+                          {handle.handle}
+                        </Typography>
+                      </Box>
+                    )
+                  })}
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-
-      {/* Image Controls Button */}
-      {scheduleData.backgroundImage && onImageTransformChange && !isExporting && !scheduleData.transparentBackground && (
-        <IconButton
-          data-testid="settings-icon"
-          onClick={() => setShowImageControls(true)}
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            bgcolor: "rgba(255, 255, 255, 0.8)",
-            "&:hover": { bgcolor: "rgba(255, 255, 255, 0.9)" },
-          }}
-        >
-          <Settings />
-        </IconButton>
-      )}
-
-      {/* Full-background Controls Button */}
-      {scheduleData.backgroundImage && !isExporting && scheduleData.transparentBackground && (
-        <IconButton
-          data-testid="settings-icon"
-          onClick={() => setShowBackgroundControls(true)}
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            bgcolor: "rgba(255, 255, 255, 0.8)",
-            "&:hover": { bgcolor: "rgba(255, 255, 255, 0.9)" },
-          }}
-        >
-          <Settings />
-        </IconButton>
-      )}
-    </Box>
-  );
+      </>
+    )
+  };
 
   const renderScheduleSection = () => {
-    const sectionBg = `radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px)`;
+    // const sectionBg = `radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px)`;
 
     return (
       <Box
         sx={{
           flex: 1,
-          backgroundColor: scheduleData.transparentBackground ? "transparent" : currentTheme.colors.surfaceBackground,
-          backgroundImage: scheduleData.transparentBackground ? "none" : sectionBg,
+          // backgroundColor: scheduleData.transparentBackground ? "transparent" : currentTheme.colors.surfaceBackground,
+          // backgroundImage: scheduleData.transparentBackground ? "none" : sectionBg,
           backgroundSize: "60px 60px",
           backgroundPosition: "0 0, 30px 0, 15px 30px, 45px 30px",
-          // backgroundBlendMode: isDarkMode ? "normal" : "hard-light",
-          padding: "24px 30px",
+          padding: "20px 30px 40px 30px",
           display: "flex",
           flexDirection: "column",
         }}
@@ -969,14 +1299,10 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           </Typography>
         </Box>
         {/* Week Range */}
-        <Box sx={{
-          position: "absolute",
-          top: 0,
+        <StyledWeekRange sx={{
           right: scheduleData.schedulePosition === "left" ? 16 : "auto",
           left: scheduleData.schedulePosition === "right" ? 16 : "auto",
-          backgroundColor: currentTheme.colors.primary,
-          padding: "12px 18px",
-          borderRadius: "0 0 25px 25px",
+          // backgroundColor: currentTheme.colors.primary,
         }}>
           <Typography 
             variant="body1" 
@@ -987,10 +1313,10 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           >
             {`${formatDate(scheduleData.startDate)} - ${formatDate(scheduleData.endDate)}`}
           </Typography>
-        </Box>
+        </StyledWeekRange>
 
         {/* Schedule Days */}
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+        <Box sx={{ flex: 1, display: "flex", flexWrap: "wrap", columnGap: 4 }}>
           {DAYS.map((day, index) => {
             const dayEntries = scheduleData.schedule[day] || [];
             const dayDate = weekDates[index] || (index + 1).toString().padStart(2, "0");
@@ -1015,8 +1341,8 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
           overflow: "hidden",
           display: "flex",
           position: "relative",
-          ...(scheduleData.transparentBackground && scheduleData.backgroundImage
-            ? getTransparentBackgroundStyle()
+          ...(scheduleData.backgroundImage
+            ? getBackgroundStyle()
             : {
                 background: `linear-gradient(135deg, #8da5cbff 0%, #142648ff 100%)`,
               }),
@@ -1035,7 +1361,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
         }}
         onMouseDown={(e) => {
           // Only handle background dragging if transparent background is enabled
-          if (scheduleData.transparentBackground && scheduleData.backgroundImage && !isExporting) {
+          if (scheduleData.backgroundImage && !isExporting) {
             const target = e.target as HTMLElement;
             if (!target.closest('img') && !target.closest('button') && !target.closest('[data-testid]')) {
               handleBackgroundMouseDown(e);
@@ -1045,14 +1371,25 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       >
         {/* Render sections based on layout */}
         {isScheduleOnLeft ? (
-          <>
-            {renderScheduleSection()}
-            {renderImageSection()}
-          </>
+          <Box sx={{
+            // backgroundColor: scheduleData.transparentBackground ? "transparent" : currentTheme.colors.surfaceBackground,
+            // backgroundImage: scheduleData.transparentBackground ? "none" : `radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor2} 3px, transparent 3px), radial-gradient(circle, ${currentTheme.colors.bgColor1} 3px, transparent 3px)`,
+            backgroundColor: "transparent",
+            backgroundImage: scheduleData.backgroundImage ? scheduleData.backgroundImage : "none",
+          }}>
+            <Box>
+              {renderScheduleSection()}
+              {renderSocialMedia()}
+            </Box>
+            <Box>
+              {renderImageSection()}
+            </Box>
+          </Box>
         ) : (
           <>
             {renderImageSection()}
             {renderScheduleSection()}
+            {renderSocialMedia()}
           </>
         )}
 
@@ -1068,8 +1405,8 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
             position: "absolute",
             left: scheduleData.schedulePosition === "right" ? 475 : "auto",
             right: scheduleData.schedulePosition === "left" ? 16 : "auto",
-            bottom: 16,
-            zIndex: 15,
+            bottom: 10,
+            zIndex: 150,
             backgroundColor: currentTheme.colors.buttonColor,
             "&:hover": {
               backgroundColor: currentTheme.colors.buttonColorHover,
@@ -1080,12 +1417,12 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
             transition: "all 0.2s",
           }}
         >
-          Export Schedule
+          Export
         </Button>
       )}
 
       {/* Small-background Controls Dialog */}
-      {showImageControls && scheduleData.backgroundImage && onImageTransformChange && !isExporting && (
+      {showImageControls && scheduleData.smallImage && onImageTransformChange && !isExporting && (
         <ImageControls
           mode="small-background"
           transform={scheduleData.imageTransform}
@@ -1099,7 +1436,7 @@ const SchedulePreview: React.FC<SchedulePreviewProps> = ({
       )}
 
       {/* Full-background Controls Dialog */}
-      {showBackgroundControls && scheduleData.transparentBackground && scheduleData.backgroundImage && onBackgroundTransformChange && !isExporting && (
+      {showBackgroundControls && scheduleData.backgroundImage && onBackgroundTransformChange && !isExporting && (
         <ImageControls
           mode="full-background"
           transform={scheduleData.backgroundTransform}
